@@ -23,7 +23,7 @@
                     <td>{{item.editorial}}</td>
                     <td>{{item.publicacion}}</td>
                     <td>
-                        <b-button class="btn-warning btn-sm mx-2" v-b-modal.modal-editar @click="editarLibro(item.id, index)">Editar</b-button>
+                        <b-button class="btn-warning btn-sm mx-2" v-b-modal.modal-editar @click="editarLibro(item)">Editar</b-button>
                         <b-button class="btn-danger btn-sm mx-2" @click="eliminarLibro(item.id, index)">Eliminar</b-button>
                     </td>
                 </tr>
@@ -64,9 +64,9 @@
                 <form>
                     <div class="form-group">
                         <label for="">Nombre</label>
-                        <input type="text" class="form-control" v-model="libroEditar.nombre_libro">
+                        <input type="text" class="form-control" v-model="libro.nombre">
                     </div>
-                    <button type="button" @click="ActualizarLibro(libroEditar)">Actualizar</button>
+                    <button type="button" class="btn btn-success" @click="ActualizarLibro(libro)">Actualizar</button>
                 </form>
             </b-modal>
         </div >
@@ -123,8 +123,7 @@ export default {
         agregarLibro(libro) {
             this.axios.post('/libros', libro)
             .then(res => {
-                console.log(res.data)
-                this.libros.push(res.data)
+                this.showLibros()
                 this.libro.codigo = ''
                 this.libro.nombre = ''
                 this.libro.autor = 0
@@ -143,31 +142,28 @@ export default {
                 this.hideModal('modal-agregar')
             })
         },
-        editarLibro(id) {
-            // this.nombreEditado = this.libros[index].nombre_libro
-            this.axios.get(`/libros/${id}`)
-            .then(res => {
-                this.libroEditar = res.data
-            })
-            .catch(e => {
-                console.log(e.response);
-            })
+        editarLibro(item) {
+            this.libro.nombre = item.nombre_libro
+            this.libro.id = item.id;
         },
-        ActualizarLibro(item){
-            this.axios.put(`/libros/${item.id}`, item)
-                .then(res => {
-                    let index = this.libros.findIndex( itemLibro => itemLibro.id === res.data.id);
-                    this.libros[index].nombre_libro = res.data.nombre_libro;
-                    this.mensaje.texto = 'Libro Actualizado'
-                    this.mensaje.color = 'success'
-                    this.showAlert();
-                    this.hideModal('modal-editar')
+        ActualizarLibro(libro){
+            const params = {nombre: libro.nombre};
+            this.axios.put(`/libros/${libro.id}`, params)
+            .then(res=>{
+                const index = this.libros.findIndex(item => item.id === libro.id);
+                this.showLibros()
+                this.mensaje.color = 'success'
+                this.mensaje.texto = 'Libro Actualizado'
+                this.showAlert()
+                this.hideModal('modal-editar')
             })
             .catch(e => {
                 console.log(e);
-                this.hideModal('modal-editar')
+                this.mensaje.color = 'danger'
+                this.mensaje.texto = 'Libro no Actualizado'
+                this.showAlert()
+                this.hideModal('modal-agregar')
             })
-            this.agregar = true;
         },
         eliminarLibro(id,index) {
             this.axios.delete(`/libros/${id}`)
